@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build application container
+      run: |
+        docker build -t apiserver -f server/server.dockerfile server/
+        docker run -d --name apiserver -p 8000:8000 apiserver
+
+    - name: Build tests container
+      run: |
+        docker build -t apitests -f tests/tests.dockerfile tests/
+        docker run -d --name apitests --network=host -it apitests
+        docker logs -f apitests
+    - name: View container logs
+      run: |
+        docker logs apitests
+    - name: generate test results
+      run: allure serve allure-results
+        
